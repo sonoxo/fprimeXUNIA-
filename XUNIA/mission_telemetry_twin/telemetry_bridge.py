@@ -13,7 +13,13 @@ from datetime import datetime, timezone
 from hashlib import sha256
 from typing import Any, Mapping
 
-BLOCKED_KINDS = {"FLIGHT_COMMAND", "VEHICLE_COMMAND", "TELECOMMAND", "CONTROL", "ACTUATE"}
+BLOCKED_KINDS = {
+    "FLIGHT_COMMAND",
+    "VEHICLE_COMMAND",
+    "TELECOMMAND",
+    "CONTROL",
+    "ACTUATE",
+}
 ALLOWED_KINDS = {"TELEMETRY", "EVENT", "LOG", "SIMULATION", "HEALTH"}
 
 
@@ -30,11 +36,15 @@ class TelemetryEnvelope:
 
 
 def _hash_payload(payload: Mapping[str, Any]) -> str:
-    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str).encode("utf-8")
+    encoded = json.dumps(
+        payload, sort_keys=True, separators=(",", ":"), default=str
+    ).encode("utf-8")
     return sha256(encoded).hexdigest()
 
 
-def normalize_frame(frame: Mapping[str, Any], source: str = "fprimeXUNIA-simulation") -> TelemetryEnvelope:
+def normalize_frame(
+    frame: Mapping[str, Any], source: str = "fprimeXUNIA-simulation"
+) -> TelemetryEnvelope:
     kind = str(frame.get("kind", "TELEMETRY")).upper()
     if kind in BLOCKED_KINDS:
         raise ValueError("REAL_WORLD_FLIGHT_CONTROL_DISABLED")
@@ -43,7 +53,9 @@ def normalize_frame(frame: Mapping[str, Any], source: str = "fprimeXUNIA-simulat
 
     component = str(frame.get("component", "unknown"))
     channel = str(frame.get("channel", "unknown"))
-    timestamp = str(frame.get("timestamp_utc") or datetime.now(timezone.utc).isoformat())
+    timestamp = str(
+        frame.get("timestamp_utc") or datetime.now(timezone.utc).isoformat()
+    )
     value = frame.get("value")
     canonical = {
         "kind": kind,
@@ -64,6 +76,8 @@ def normalize_frame(frame: Mapping[str, Any], source: str = "fprimeXUNIA-simulat
     )
 
 
-def to_ontology_record(frame: Mapping[str, Any], source: str = "fprimeXUNIA-simulation") -> dict[str, Any]:
+def to_ontology_record(
+    frame: Mapping[str, Any], source: str = "fprimeXUNIA-simulation"
+) -> dict[str, Any]:
     envelope = normalize_frame(frame, source)
     return asdict(envelope)
